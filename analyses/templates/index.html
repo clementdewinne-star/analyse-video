@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio Analyse Sport - Version Finale</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #f0f2f5; padding: 20px; color: #333; }
+        
+        .video-card { 
+            background: white; padding: 20px; margin-bottom: 40px; 
+            border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+            max-width: 900px; margin: 0 auto;
+        }
+
+        /* --- ZONE VIDÉO --- */
+        .video-wrapper { position: relative; width: 100%; background: #000; border-radius: 8px; overflow: hidden; user-select: none; }
+        video { width: 100%; display: block; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+        .drawing-active canvas { pointer-events: auto; cursor: crosshair; border: 4px solid #ff4757; }
+
+        /* --- BOUTONS & UI --- */
+        .toolbar { margin-top: 15px; padding: 15px; background: #ecf0f1; border-radius: 8px; display: flex; gap: 15px; align-items: center; justify-content: center; }
+        .tagging-zone { margin-top: 20px; padding: 20px; background: #e3f2fd; border-radius: 8px; text-align: center; border: 2px dashed #90caf9; }
+
+        /* Filtres */
+        .filter-bar { margin-top: 20px; padding: 10px; border-bottom: 2px solid #eee; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .filter-btn { background: white; border: 1px solid #ccc; color: #555; padding: 5px 15px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .filter-btn:hover, .filter-btn.active { background: #2c3e50; color: white; border-color: #2c3e50; transform: scale(1.05); }
+
+        /* Styles Boutons */
+        button { cursor: pointer; border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; transition: all 0.2s; }
+        button:hover { transform: translateY(-2px); }
+        
+        .input-time { width: 50px; padding: 5px; text-align: center; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; }
+        
+        .btn-green { background-color: #27ae60; color: white; }
+        .btn-red   { background-color: #e74c3c; color: white; }
+        .btn-grey  { background-color: #95a5a6; color: white; }
+        .btn-blue  { background-color: #2980b9; color: white; margin: 5px; min-width: 80px; }
+        .btn-dark  { background-color: #2c3e50; color: white; margin: 0 10px; }
+        
+        .btn-small { background-color: #7f8c8d; color: white; padding: 5px 12px; font-size: 12px; }
+        .btn-purple { background-color: #9b59b6; color: white; padding: 5px 12px; font-size: 12px; margin-left: 5px; } /* Bouton Download */
+
+        /* Liste Séquences */
+        ul { list-style: none; padding: 0; margin-top: 10px; }
+        li { background: #fff; border-left: 5px solid #3498db; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 8px; padding: 12px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align: center;">⚽️ Studio Analyse Pro</h1>
+
+    {% for video in videos %}
+    <div class="video-card">
+        <h2>{{ video.titre }}</h2>
+
+        <div class="video-wrapper" id="wrapper-{{ video.id }}">
+            <video id="vid-{{ video.id }}" playsinline preload="auto" onclick="clickVideo('{{ video.id }}')">
+                <source src="{{ video.fichier_video.url }}" type="video/mp4">
+            </video>
+            <canvas id="canvas-{{ video.id }}"></canvas>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn-green" onclick="togglePlay('{{ video.id }}')">⏯ Play / Pause</button>
+            <button class="btn-red" onclick="toggleDrawMode('{{ video.id }}')">✏️ Dessiner</button>
+            <button class="btn-grey" onclick="clearDraw('{{ video.id }}')">🗑 Effacer</button>
+        </div>
+
+        <div class="tagging-zone">
+            <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #bbdefb;">
+                <p style="margin: 0 0 15px 0; font-weight: bold; color: #2980b9;">⚡️ Mode Rapide</p>
+                <input type="number" id="lag-time" class="input-time" value="5">s avant / 
+                <input type="number" id="lead-time" class="input-time" value="5">s après<br>
+                <button class="btn-blue" onclick="tagAuto('{{ video.id }}', 'BUT ⚽️')">⚽️ BUT</button>
+                <button class="btn-blue" onclick="tagAuto('{{ video.id }}', 'TIR 🥅')">🥅 TIR</button>
+                <button class="btn-blue" onclick="tagAuto('{{ video.id }}', 'FAUTE ⚠️')">⚠️ FAUTE</button>
+                <button class="btn-blue" onclick="tagAuto('{{ video.id }}', 'CORNER 🚩')">🚩 CORNER</button>
+            </div>
+            <div>
+                <button id="btn-in" class="btn-dark" onclick="setIn('{{ video.id }}')">🚩 IN</button>
+                <span id="timer-display" style="font-weight: bold; margin: 0 15px;">En attente...</span>
+                <button id="btn-out" class="btn-dark" onclick="setOut('{{ video.id }}')" disabled>🏁 OUT</button>
+            </div>
+        </div>
+
+        <div class="filter-bar" id="filter-container-{{ video.id }}">
+            <strong>Filtres :</strong>
+            <button class="filter-btn active" onclick="filterList('all', this, '{{ video.id }}')">Tout voir</button>
+        </div>
+
+        <h3>📋 Séquences :</h3>
+        <ul id="list-{{ video.id }}">
+            {% for seq in video.sequences.all %}
+            <li class="sequence-item" data-label="{{ seq.label }}">
+                <span>
+                    <strong>{{ seq.label }}</strong> 
+                    <span style="color: #7f8c8d; font-size: 0.9em;">({{ seq.temps_debut }}s - {{ seq.temps_fin }}s)</span>
+                </span>
+                <div>
+                    <button class="btn-small" onclick="jumpTo('{{ video.id }}', {{ seq.temps_debut }})">▶ Revoir</button>
+                    
+                    <a href="/download/{{ seq.id }}/" target="_blank" style="text-decoration: none;">
+                        <button class="btn-purple">⬇️ MP4</button>
+                    </a>
+                </div>
+            </li>
+            {% empty %}
+            <li style="background: none; border: none; color: #999;">Aucune séquence.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+
+    <script>
+        let isDrawing = false; let startTime = null;
+
+        // 1. GÉNÉRATEUR FILTRES
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('ul[id^="list-"]').forEach(list => {
+                const videoId = list.id.split('-')[1];
+                const container = document.getElementById('filter-container-' + videoId);
+                const labels = new Set();
+                list.querySelectorAll('.sequence-item').forEach(item => labels.add(item.getAttribute('data-label')));
+                labels.forEach(label => {
+                    const btn = document.createElement('button');
+                    btn.className = 'filter-btn'; btn.innerText = label;
+                    btn.onclick = function() { filterList(label, this, videoId); };
+                    container.appendChild(btn);
+                });
+            });
+        });
+
+        function filterList(filterText, btnElement, videoId) {
+            const container = document.getElementById('filter-container-' + videoId);
+            container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+            const list = document.getElementById('list-' + videoId);
+            list.querySelectorAll('.sequence-item').forEach(item => {
+                const label = item.getAttribute('data-label');
+                if (filterText === 'all' || label === filterText) item.style.display = 'flex';
+                else item.style.display = 'none';
+            });
+        }
+
+        // 2. LECTURE VIDÉO
+        function togglePlay(id) {
+            var vid = document.getElementById('vid-' + id);
+            if (!vid) return;
+            if (vid.paused) vid.play().catch(e => alert("Safari bloque la lecture. Appuyez sur Espace ou cliquez à nouveau."));
+            else vid.pause();
+        }
+        function clickVideo(id) { if (!isDrawing) togglePlay(id); }
+        function jumpTo(id, time) {
+            var vid = document.getElementById('vid-' + id);
+            if(vid) { vid.currentTime = time; vid.play(); }
+        }
+
+        // 3. DESSIN
+        function toggleDrawMode(id) {
+            isDrawing = !isDrawing;
+            var w = document.getElementById('wrapper-' + id);
+            var v = document.getElementById('vid-' + id);
+            var c = document.getElementById('canvas-' + id);
+            if(isDrawing) { w.classList.add('drawing-active'); v.pause(); c.width=v.clientWidth; c.height=v.clientHeight; }
+            else { w.classList.remove('drawing-active'); }
+        }
+        function clearDraw(id) {
+            var c = document.getElementById('canvas-' + id);
+            c.getContext('2d').clearRect(0,0,c.width,c.height);
+        }
+
+        // 4. TAGGING
+        function tagAuto(videoId, label) {
+            var v = document.getElementById('vid-' + videoId);
+            var lag = document.getElementById('lag-time').value;
+            var lead = document.getElementById('lead-time').value;
+            fetch('/api/tag/', { method: 'POST', body: JSON.stringify({ mode: 'auto', video_id: videoId, label: label, temps: v.currentTime, lag: lag, lead: lead }) })
+            .then(r=>r.json()).then(d=>location.reload());
+        }
+        function setIn(videoId) {
+            var v = document.getElementById('vid-' + videoId);
+            startTime = v.currentTime;
+            document.getElementById('btn-in').style.background='#27ae60';
+            document.getElementById('btn-in').innerText="IN : "+startTime.toFixed(1);
+            document.getElementById('btn-out').disabled=false;
+            document.getElementById('btn-out').style.background='#c0392b';
+        }
+        function setOut(videoId) {
+            if(startTime===null)return;
+            var v = document.getElementById('vid-' + videoId);
+            var l = prompt("Nom ?","Action");
+            if(!l)return;
+            fetch('/api/tag/', { method: 'POST', body: JSON.stringify({ mode: 'manual', video_id: videoId, label: l, start_time: startTime, end_time: v.currentTime }) })
+            .then(r=>r.json()).then(d=>location.reload());
+        }
+
+        // 5. INTERACTION SOURIS CANVAS
+        document.querySelectorAll('canvas').forEach(c => {
+            var ctx=c.getContext('2d'); var p=false;
+            c.addEventListener('mousedown',e=>{if(!isDrawing)return;p=true;ctx.beginPath();ctx.moveTo(e.offsetX,e.offsetY);ctx.lineWidth=4;ctx.strokeStyle='#ff4757';ctx.lineCap='round';});
+            c.addEventListener('mousemove',e=>{if(!p)return;ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke();});
+            c.addEventListener('mouseup',()=>p=false); c.addEventListener('mouseleave',()=>p=false);
+        });
+        document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();document.querySelector('.btn-green').click();}});
+    </script>
+</body>
+</html>

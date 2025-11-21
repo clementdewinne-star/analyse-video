@@ -1,0 +1,15 @@
+# Ignorer tous les fichiers vidéos
+*.mp4
+*.mov
+*.avi
+
+# Ignorer les dossiers de médias et bases de données
+media/
+videos/
+db.sqlite3
+
+# Ignorer les fichiers système Python et Mac
+__pycache__/
+.DS_Store
+.venv/
+env/

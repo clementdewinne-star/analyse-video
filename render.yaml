@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: hudl-clone
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn backend.wsgi:application"
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
