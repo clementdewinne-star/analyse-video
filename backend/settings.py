@@ -81,7 +81,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-# ⚠️ REMPLIS CES 3 LIGNES AVEC TES CODES CLOUDINARY ⚠️
+# ⚠️ METS TES VRAIS CODES ICI ⚠️
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dfn1gtzic', 
     'API_KEY': '569876383253485',
@@ -89,3 +89,4 @@ CLOUDINARY_STORAGE = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+

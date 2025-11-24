@@ -1,48 +1,49 @@
 import google.generativeai as genai
 import os
 import time
-import requests # Nécessaire pour récupérer la vidéo du Cloud
+import requests 
 from moviepy import VideoFileClip
 
-# Ta clé API
+# Ta clé API Google (Remets la tienne si différente)
 GOOGLE_API_KEY = "AIzaSyBK53P2vcDTExwWV0S3n_x8-NeMECgT0P8"
 
 genai.configure(api_key=GOOGLE_API_KEY)
 
 def download_from_url(url, local_filename):
     """Télécharge un fichier depuis une URL vers le disque local temporaire"""
-    print(f"... Téléchargement de la vidéo depuis le Cloud ...")
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(local_filename, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
-    return local_filename
+    print(f"... Téléchargement Cloudinary vers Render ...")
+    try:
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+            with open(local_filename, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        return local_filename
+    except Exception as e:
+        print(f"Erreur téléchargement: {e}")
+        return None
 
 def analyse_tactique(video_url, debut=None, fin=None):
-    """
-    Analyse une vidéo (URL ou locale) avec Gemini 2.0 Flash.
-    """
-    print(f"🚀 Préparation IA...")
+    print(f"🚀 Démarrage IA...")
     
-    # Noms de fichiers temporaires uniques
+    # Noms de fichiers temporaires
     ts = int(time.time())
     path_download = f"temp_dl_{ts}.mp4"
     path_compressed = f"temp_comp_{ts}.mp4"
     
     try:
-        # --- 1. TÉLÉCHARGEMENT (Si c'est une URL Cloudinary) ---
+        # --- 1. RÉCUPÉRATION DU FICHIER ---
         if video_url.startswith('http'):
-            # C'est une URL (Cloudinary), on télécharge
-            download_from_url(video_url, path_download)
+            # Si c'est une URL (Cloudinary), on télécharge
+            if not download_from_url(video_url, path_download):
+                return "❌ Erreur : Impossible de télécharger la vidéo depuis Cloudinary."
             source_file = path_download
         else:
-            # C'est un fichier local (cas rare sur Render, mais possible)
-            # On nettoie le chemin si Django a mis un '/' devant
+            # Cas local (rare en prod)
             if video_url.startswith('/'): video_url = video_url[1:]
             source_file = video_url
 
-        # --- 2. TRAITEMENT MOVIEPY ---
+        # --- 2. TRAITEMENT & COMPRESSION ---
         with VideoFileClip(source_file) as clip:
             start = debut if debut is not None else 0
             if fin is not None: end = fin
@@ -64,12 +65,11 @@ def analyse_tactique(video_url, debut=None, fin=None):
             time.sleep(1)
             video_file = genai.get_file(video_file.name)
 
-        if video_file.state.name == "FAILED": return "❌ Erreur : Google n'a pas lu la vidéo."
+        if video_file.state.name == "FAILED": return "❌ Erreur : Google a rejeté la vidéo."
 
         # --- 4. PROMPT ---
         print("🧠 Analyse en cours...")
         model = genai.GenerativeModel(model_name="models/gemini-2.0-flash")
-        
         prompt = """
         Analyste expert foot. Analyse ce clip.
         Rapport structuré :
@@ -79,7 +79,6 @@ def analyse_tactique(video_url, debut=None, fin=None):
         💡 **CONSEIL**
         Utilise des émojis.
         """
-
         response = model.generate_content([video_file, prompt])
         
         # --- 5. NETTOYAGE ---
@@ -90,7 +89,6 @@ def analyse_tactique(video_url, debut=None, fin=None):
         return response.text
 
     except Exception as e:
-        # Nettoyage d'urgence
         if os.path.exists(path_download): os.remove(path_download)
         if os.path.exists(path_compressed): os.remove(path_compressed)
         return f"Erreur technique : {str(e)}"
