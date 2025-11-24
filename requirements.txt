@@ -7,3 +7,4 @@ django-cloudinary-storage
 cloudinary
 python-docx
 requests
+google-generativeai
