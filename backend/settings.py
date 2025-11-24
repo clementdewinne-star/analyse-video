@@ -9,12 +9,16 @@ ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
 
 INSTALLED_APPS = [
+    # --- CLOUDINARY (EN PREMIER) ---
+    'cloudinary_storage',
+    'django.contrib.staticfiles',
+    'cloudinary',
+    # -------------------------------
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
     'analyses',
 ]
 
@@ -68,12 +72,20 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+# --- FICHIERS STATIQUES (DESIGN) ---
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# --- FICHIERS MEDIAS (VIDÉOS) SUR CLOUDINARY ---
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# ⚠️ REMPLIS CES 3 LIGNES AVEC TES CODES CLOUDINARY ⚠️
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dfn1gtzic', 
+    'API_KEY': '569876383253485',
+    'API_SECRET': '4rCVcnRdGkRIOiur2sq1G9G9y7k'
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
