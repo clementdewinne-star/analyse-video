@@ -3,8 +3,7 @@ gunicorn
 moviepy
 imageio-ffmpeg
 whitenoise
-google-generativeai
-python-docx
 django-cloudinary-storage
 cloudinary
-
+python-docx
+requests

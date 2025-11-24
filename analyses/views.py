@@ -7,7 +7,7 @@ from .ai_google import analyse_tactique
 import json
 import os
 import time
-import requests # Nécessaire pour télécharger la vidéo avant découpe
+import requests
 from moviepy import VideoFileClip
 from docx import Document
 
@@ -20,69 +20,63 @@ def generer_word(texte_ia, titre):
     doc.add_heading(f'Rapport : {titre}', 0)
     doc.add_paragraph(texte_ia)
     nom = f"Rapport_{int(time.time())}.docx"
+    # On s'assure que le dossier media/rapports existe
     dossier = os.path.join(settings.MEDIA_ROOT, 'rapports')
     os.makedirs(dossier, exist_ok=True)
-    doc.save(os.path.join(dossier, nom))
-    # Attention : sur Render, ce fichier sera éphémère, mais téléchargeable immédiatement
+    path = os.path.join(dossier, nom)
+    doc.save(path)
     return f"/media/rapports/{nom}"
 
-# Fonction utilitaire pour télécharger depuis Cloudinary
-def download_temp(url):
-    path = f"temp_dl_{int(time.time())}.mp4"
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192): f.write(chunk)
-    return path
-
+# --- 1. ANALYSE CLIP ENTIER ---
 def analyser_video_entiere(request, video_id):
     try:
         video = Video.objects.get(id=video_id)
-        # On passe l'URL Cloudinary
+        # CORRECTION : On utilise .url ici !
         rapport = analyse_tactique(video.fichier_video.url)
         url_word = generer_word(rapport, video.titre)
         return JsonResponse({'status': 'ok', 'rapport': rapport, 'url_word': url_word})
-    except Exception as e: return JsonResponse({'status': 'error', 'message': str(e)})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
 
+# --- 2. ANALYSE SÉQUENCE ---
 def analyser_sequence_ia(request, seq_id):
     try:
         seq = Sequence.objects.get(id=seq_id)
-        # On passe l'URL Cloudinary
+        # CORRECTION : On utilise .url ici !
         rapport = analyse_tactique(seq.video.fichier_video.url, seq.temps_debut, seq.temps_fin)
-        url_word = generer_word(rapport, seq.label)
+        url_word = generer_word(rapport, f"{seq.label} ({seq.video.titre})")
         return JsonResponse({'status': 'ok', 'rapport': rapport, 'url_word': url_word})
-    except Exception as e: return JsonResponse({'status': 'error', 'message': str(e)})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
 
+# --- TÉLÉCHARGEMENT ---
 def telecharger_sequence(request, seq_id):
-    path_temp = None
+    path_temp = f"temp_dl_{int(time.time())}.mp4"
     try:
         seq = Sequence.objects.get(id=seq_id)
-        # 1. Télécharger la source depuis Cloudinary
-        path_temp = download_temp(seq.video.fichier_video.url)
+        # On télécharge d'abord depuis Cloudinary
+        url = seq.video.fichier_video.url
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+            with open(path_temp, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192): f.write(chunk)
         
-        # 2. Découper
+        # On découpe
         nom_out = f"{seq.label}.mp4"
-        # On écrit direct dans la réponse pour éviter le stockage disque
-        # (Code simplifié pour éviter les erreurs de chemin sur Render)
-        # Pour l'instant on garde le stockage temporaire
-        path_out = "temp_out_" + nom_out
+        # Pas de chemin complexe, juste le nom de fichier pour le flux
+        path_out = "output_" + path_temp
         
         with VideoFileClip(path_temp) as v:
             v.subclipped(seq.temps_debut, seq.temps_fin).write_videofile(path_out, codec="libx264", audio_codec="aac", preset='ultrafast', logger=None)
         
-        # 3. Envoyer
         f = open(path_out, 'rb')
         response = FileResponse(f, as_attachment=True, filename=nom_out)
-        
-        # Nettoyage (Note: sur Windows/Mac le fichier peut être verrouillé, sur Linux ça va)
-        # os.remove(path_temp) 
-        
         return response
     except Exception as e: return HttpResponse(str(e))
 
+# --- TAGGING ---
 @csrf_exempt 
 def ajouter_tag(request):
-    # (Code inchangé par rapport à avant)
     if request.method == 'POST':
         try:
             d = json.loads(request.body)
