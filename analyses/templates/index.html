@@ -3,153 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Studio Analyse - Pro</title>
+    <title>Studio Analyse - Ultimate</title>
     <style>
-        body { font-family: system-ui, sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
-        .video-card { background: white; padding: 20px; margin-bottom: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 900px; margin: 0 auto; }
-        .video-wrapper { position: relative; width: 100%; background: #000; border-radius: 8px; overflow: hidden; user-select: none; }
+        /* DESIGN SOMBRE PRO */
+        body { font-family: system-ui, -apple-system, sans-serif; background: #1e272e; padding: 20px; color: white; }
+        .video-card { background: #2f3640; padding: 20px; margin-bottom: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 1000px; margin: 0 auto; }
+        
+        /* LECTEUR VIDÉO */
+        .video-wrapper { position: relative; width: 100%; background: #000; border-radius: 8px; overflow: hidden; user-select: none; border: 2px solid #444; }
         video { width: 100%; display: block; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
-        .drawing-active canvas { pointer-events: auto; cursor: crosshair; border: 4px solid #ff4757; }
-        .toolbar { margin-top: 15px; padding: 15px; background: #ecf0f1; border-radius: 8px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        button { cursor: pointer; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; transition: 0.2s; }
-        .btn-green { background: #27ae60; color: white; }
-        .btn-red { background: #e74c3c; color: white; }
-        .btn-grey { background: #95a5a6; color: white; }
-        .btn-blue { background: #2980b9; color: white; margin: 5px; }
-        .btn-dark { background: #2c3e50; color: white; }
-        .btn-ia { background: #8e44ad; color: white; border: 2px solid #9b59b6; margin-left: 5px; font-size: 11px; }
-        .tagging-zone { margin-top: 20px; padding: 20px; background: #e3f2fd; border-radius: 8px; text-align: center; border: 2px dashed #90caf9; }
-        .input-time { width: 40px; text-align: center; border-radius: 4px; border: 1px solid #ccc; }
-        .filter-bar { margin-top: 20px; padding: 10px; border-bottom: 2px solid #eee; display: flex; gap: 10px; flex-wrap: wrap; }
-        .filter-btn { background: white; border: 1px solid #ccc; padding: 5px 15px; border-radius: 20px; font-size: 13px; cursor: pointer; }
-        .filter-btn.active { background: #2c3e50; color: white; }
-        ul { list-style: none; padding: 0; margin-top: 10px; }
-        li { background: #fff; border-left: 5px solid #3498db; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .drawing-active canvas { pointer-events: auto; cursor: crosshair; }
+
+        /* BARRES D'OUTILS */
+        .toolbar-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; padding: 10px; border-bottom: 1px solid #444; margin-bottom: 10px; }
+        .toolbar-title { width: 100%; text-align: center; font-size: 12px; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        button { cursor: pointer; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; transition: 0.2s; color: white; font-size: 13px; }
+        button:hover { transform: translateY(-2px); filter: brightness(120%); }
+        button:disabled { background: #555 !important; cursor: not-allowed; transform: none; color: #888; }
+        button.active { outline: 2px solid white; transform: scale(1.05); }
+
+        /* COULEURS */
+        .bg-green { background: #27ae60; } .bg-red { background: #e74c3c; } .bg-blue { background: #3498db; } 
+        .bg-purple { background: #9b59b6; } .bg-orange { background: #e67e22; } .bg-grey { background: #7f8c8d; } .bg-indigo { background: #4834d4; }
+
+        .tagging-zone { background: #353b48; padding: 15px; border-radius: 8px; text-align: center; margin-top: 15px; }
+        .input-time { width: 40px; text-align: center; border-radius: 4px; border: none; padding: 5px; background: #2f3640; color: white; }
+
+        ul { list-style: none; padding: 0; margin-top: 20px; }
+        li { background: #353b48; border-left: 4px solid #3498db; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
-    <h1 style="text-align: center;">⚽️ Studio Analyse Pro</h1>
+    <h1 style="text-align: center;">⚽️ Studio Ultimate</h1>
     {% for video in videos %}
     <div class="video-card">
-        <h2>{{ video.titre }}</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 style="margin:0;">{{ video.titre }}</h2>
+            <div>
+                <button class="bg-purple" onclick="analyserClipEntier('{{ video.id }}', this)">🧠 Coach Tactique (Word)</button>
+                <button class="bg-indigo" onclick="lancerSpotlight('{{ video.id }}', this)">🔦 Spotlight (Vidéo)</button>
+            </div>
+        </div>
+
         <div class="video-wrapper" id="wrapper-{{ video.id }}">
             <video id="vid-{{ video.id }}" playsinline preload="auto" onclick="clickVideo('{{ video.id }}')">
                 <source src="{{ video.fichier_video.url }}" type="video/mp4">
             </video>
             <canvas id="canvas-{{ video.id }}"></canvas>
         </div>
-        <div class="toolbar">
-            <button class="btn-green" onclick="togglePlay('{{ video.id }}')">⏯ Play/Pause</button>
-            <button class="btn-red" onclick="toggleDrawMode('{{ video.id }}')">✏️ Dessiner</button>
-            <button class="btn-grey" onclick="clearDraw('{{ video.id }}')">🗑 Effacer</button>
-            <button class="btn-ia" onclick="analyserClipEntier('{{ video.id }}', this)">🧠 Analyser ce clip</button>
+
+        <div class="toolbar-group">
+            <div class="toolbar-title">Outils Graphiques</div>
+            <button class="bg-green" onclick="togglePlay('{{ video.id }}')">⏯ Play</button>
+            <button class="bg-red tool-btn" onclick="setTool('{{ video.id }}', 'pencil', this)">✏️ Crayon</button>
+            <button class="bg-orange tool-btn" onclick="setTool('{{ video.id }}', 'zone', this)">▱ Zone 3D</button>
+            <button class="bg-orange tool-btn" onclick="setTool('{{ video.id }}', 'cone', this)">▼ Cône</button>
+            <button class="bg-grey" onclick="clearDraw('{{ video.id }}')">🗑 Effacer</button>
         </div>
+
         <div class="tagging-zone">
-            <div style="margin-bottom: 15px;">
-                <p>⚡️ <strong>Mode Rapide</strong> : <input type="number" id="lag-time" class="input-time" value="5">s avant / <input type="number" id="lead-time" class="input-time" value="5">s après</p>
-                <button class="btn-blue" onclick="tagAuto('{{ video.id }}', 'BUT ⚽️')">BUT ⚽️</button>
-                <button class="btn-blue" onclick="tagAuto('{{ video.id }}', 'TIR 🥅')">TIR 🥅</button>
-                <button class="btn-blue" onclick="tagAuto('{{ video.id }}', 'FAUTE ⚠️')">FAUTE ⚠️</button>
-            </div>
-            <div>
-                <button id="btn-in" class="btn-dark" onclick="setIn('{{ video.id }}')">🚩 IN</button>
-                <span id="timer-display" style="font-weight: bold; margin: 0 15px;">En attente...</span>
-                <button id="btn-out" class="btn-dark" onclick="setOut('{{ video.id }}')" disabled>🏁 OUT</button>
-            </div>
+            <p style="margin:0 0 10px 0; color:#aaa;">⚡️ Séquençage Rapide</p>
+            <button class="bg-blue" onclick="tagAuto('{{ video.id }}', 'BUT ⚽️')">BUT ⚽️</button>
+            <button class="bg-blue" onclick="tagAuto('{{ video.id }}', 'TIR 🥅')">TIR 🥅</button>
+            <button class="bg-blue" onclick="tagAuto('{{ video.id }}', 'FAUTE ⚠️')">FAUTE ⚠️</button>
         </div>
-        <div class="filter-bar" id="filter-container-{{ video.id }}">
-            <button class="filter-btn active" onclick="filterList('all', this, '{{ video.id }}')">Tout</button>
-        </div>
-        <ul id="list-{{ video.id }}">
+
+        <h3>📋 Séquences</h3>
+        <ul>
             {% for seq in video.sequences.all %}
-            <li class="sequence-item" data-label="{{ seq.label }}">
-                <span><strong>{{ seq.label }}</strong> ({{ seq.temps_debut }}s - {{ seq.temps_fin }}s)</span>
+            <li>
+                <span><strong>{{ seq.label }}</strong> ({{ seq.temps_debut }}s)</span>
                 <div>
-                    <button class="btn-grey" style="font-size: 12px;" onclick="jumpTo('{{ video.id }}', {{ seq.temps_debut }})">▶ Voir</button>
-                    <a href="/download/{{ seq.id }}/" target="_blank"><button class="btn-ia" style="font-size: 12px;">⬇️ MP4</button></a>
-                    <button class="btn-ia" style="font-size: 12px;" onclick="analyserSequence('{{ seq.id }}', this)">🧠 IA</button>
+                    <button class="bg-grey" onclick="jumpTo('{{ video.id }}', {{ seq.temps_debut }})">▶</button>
+                    <a href="/download/{{ seq.id }}/" target="_blank"><button class="bg-blue">⬇️</button></a>
+                    <button class="bg-purple" onclick="analyserSequence('{{ seq.id }}', this)">🧠</button>
                 </div>
             </li>
-            {% empty %}
-            <li style="color: #999;">Aucune séquence.</li>
-            {% endfor %}
+            {% empty %}<li style="color: #888;">Aucune séquence.</li>{% endfor %}
         </ul>
     </div>
     {% endfor %}
 
     <script>
-        function analyserClipEntier(videoId, btn) {
-            const txt = btn.innerText; btn.innerText = "🧠 Rédaction Word..."; btn.disabled = true; btn.style.background = "#7f8c8d";
-            fetch('/ai/video/' + videoId + '/').then(r=>r.json()).then(d=>{
-                btn.innerText = txt; btn.disabled = false; btn.style.background = "#8e44ad";
-                if(d.status==='ok') { window.location.href = d.url_word; alert("📄 Rapport téléchargé !"); }
-                else alert("Erreur: "+d.message);
-            }).catch(()=>{alert("Erreur réseau"); btn.innerText=txt; btn.disabled=false;});
+        let currentTool = null, points3D = [], isDrawing = false;
+
+        // --- IA GEMINI (WORD) ---
+        function analyserClipEntier(id, btn) {
+            const t = btn.innerText; btn.innerText="⏳ Word..."; btn.disabled=true; btn.style.background="#555";
+            fetch('/ai/video/'+id+'/').then(r=>r.json()).then(d=>{
+                btn.innerText=t; btn.disabled=false; btn.style.background="#9b59b6";
+                if(d.status==='ok'){ window.location.href=d.url_word; alert("📄 Rapport téléchargé !"); }
+                else alert(d.message);
+            }).catch(()=>{alert("Erreur réseau"); btn.innerText=t; btn.disabled=false;});
         }
         function analyserSequence(seqId, btn) {
-            const txt = btn.innerText; btn.innerText = "⏳ Word..."; btn.disabled = true;
-            fetch('/ai/sequence/' + seqId + '/').then(r=>r.json()).then(d=>{
-                btn.innerText = txt; btn.disabled = false;
-                if(d.status==='ok') { window.location.href = d.url_word; }
-                else alert("Erreur: "+d.message);
-            }).catch(()=>{alert("Erreur"); btn.innerText=txt; btn.disabled=false;});
-        }
-        // --- BASE ---
-        let isDrawing = false, startTime = null;
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('ul[id^="list-"]').forEach(list => {
-                const vidId = list.id.split('-')[1];
-                const container = document.getElementById('filter-container-' + vidId);
-                const labels = new Set();
-                list.querySelectorAll('.sequence-item').forEach(i => labels.add(i.getAttribute('data-label')));
-                labels.forEach(l => {
-                    const btn = document.createElement('button'); btn.className = 'filter-btn'; btn.innerText = l;
-                    btn.onclick = function() { filterList(l, this, vidId); };
-                    container.appendChild(btn);
-                });
-            });
-        });
-        function filterList(txt, btn, id) {
-            document.getElementById('filter-container-'+id).querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('list-'+id).querySelectorAll('.sequence-item').forEach(i => {
-                i.style.display = (txt === 'all' || i.getAttribute('data-label') === txt) ? 'flex' : 'none';
+            const t = btn.innerText; btn.innerText="⏳"; btn.disabled=true;
+            fetch('/ai/sequence/'+seqId+'/').then(r=>r.json()).then(d=>{
+                btn.innerText=t; btn.disabled=false;
+                if(d.status==='ok') window.location.href=d.url_word; else alert(d.message);
             });
         }
-        function togglePlay(id) { const v = document.getElementById('vid-' + id); if(v.paused) v.play(); else v.pause(); }
-        function clickVideo(id) { if(!isDrawing) togglePlay(id); }
-        function jumpTo(id, t) { const v = document.getElementById('vid-' + id); v.currentTime = t; v.play(); }
-        function toggleDrawMode(id) {
-            isDrawing = !isDrawing;
-            const w = document.getElementById('wrapper-' + id); const v = document.getElementById('vid-' + id); const c = document.getElementById('canvas-' + id);
-            if(isDrawing) { w.classList.add('drawing-active'); v.pause(); c.width=v.clientWidth; c.height=v.clientHeight; } else { w.classList.remove('drawing-active'); }
+
+        // --- IA YOLO (SPOTLIGHT) ---
+        function lancerSpotlight(id, btn) {
+            const t = btn.innerText; btn.innerText="🔦 Calcul..."; btn.disabled=true; btn.style.background="#555";
+            fetch('/ai/spotlight/'+id+'/').then(r=>{if(r.ok)return r.blob();throw new Error('Erreur');})
+            .then(blob=>{
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href=url; a.download='Spotlight.mp4'; a.click();
+                btn.innerText=t; btn.disabled=false; btn.style.background="#4834d4";
+            }).catch(e=>{ alert("Erreur Spotlight : " + e); btn.innerText=t; btn.disabled=false; });
         }
-        function clearDraw(id) { const c = document.getElementById('canvas-' + id); c.getContext('2d').clearRect(0,0,c.width,c.height); }
-        function tagAuto(id, label) {
-            fetch('/api/tag/', { method: 'POST', body: JSON.stringify({ mode: 'auto', video_id: id, label: label, temps: document.getElementById('vid-' + id).currentTime, lag: document.getElementById('lag-time').value, lead: document.getElementById('lead-time').value })})
-            .then(() => location.reload());
+
+        // --- DESSIN 3D ---
+        function setTool(id, name, btn) {
+            document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+            if(currentTool===name){currentTool=null; toggleCanvas(id,false); return;}
+            currentTool=name; points3D=[]; btn.classList.add('active'); toggleCanvas(id,true);
+            if(name==='zone') alert("Cliquez 4 points au sol.");
+            if(name==='cone') alert("1: Joueur, 2: Gauche, 3: Droite");
         }
-        function setIn(id) {
-            startTime = document.getElementById('vid-' + id).currentTime;
-            document.getElementById('btn-in').style.background = '#27ae60';
-            document.getElementById('btn-in').innerText = "IN : " + startTime.toFixed(1);
-            document.getElementById('btn-out').disabled = false;
-            document.getElementById('btn-out').style.background = '#c0392b';
-        }
-        function setOut(id) {
-            if(startTime === null) return;
-            const label = prompt("Nom ?", "Action");
-            if(label) fetch('/api/tag/', { method: 'POST', body: JSON.stringify({ mode: 'manual', video_id: id, label: label, start_time: startTime, end_time: document.getElementById('vid-' + id).currentTime })})
-            .then(() => location.reload());
+        function toggleCanvas(id,on){
+            const w=document.getElementById('wrapper-'+id), v=document.getElementById('vid-'+id), c=document.getElementById('canvas-'+id);
+            if(on){ w.classList.add('drawing-active'); v.pause(); c.width=v.clientWidth; c.height=v.clientHeight; }
+            else w.classList.remove('drawing-active');
         }
         document.querySelectorAll('canvas').forEach(c => {
-            const ctx = c.getContext('2d'); let p = false;
-            c.addEventListener('mousedown', e => { if(isDrawing){ p=true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); ctx.lineWidth=4; ctx.strokeStyle='#ff4757'; }});
-            c.addEventListener('mousemove', e => { if(p){ ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); }});
-            c.addEventListener('mouseup', () => p=false);
+            const ctx=c.getContext('2d');
+            c.addEventListener('mousedown', e=>{
+                if(!currentTool)return;
+                const x=e.offsetX, y=e.offsetY;
+                if(currentTool==='pencil'){isDrawing=true; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineWidth=3; ctx.strokeStyle='#e74c3c';}
+                if(currentTool==='zone'){
+                    points3D.push({x,y}); ctx.fillStyle='yellow'; ctx.fillRect(x-2,y-2,4,4);
+                    if(points3D.length===4){
+                        ctx.beginPath(); ctx.moveTo(points3D[0].x,points3D[0].y);
+                        for(let i=1;i<4;i++) ctx.lineTo(points3D[i].x,points3D[i].y);
+                        ctx.closePath(); ctx.fillStyle='rgba(230,126,34,0.4)'; ctx.fill(); ctx.stroke(); points3D=[];
+                    }
+                }
+                if(currentTool==='cone'){
+                    points3D.push({x,y}); ctx.fillStyle='cyan'; ctx.fillRect(x-2,y-2,4,4);
+                    if(points3D.length===3){
+                        ctx.beginPath(); ctx.moveTo(points3D[0].x,points3D[0].y);
+                        ctx.lineTo(points3D[1].x,points3D[1].y); ctx.lineTo(points3D[2].x,points3D[2].y);
+                        ctx.closePath(); 
+                        let g=ctx.createLinearGradient(points3D[0].x,points3D[0].y,points3D[1].x,points3D[1].y);
+                        g.addColorStop(0,"rgba(255,255,255,0.1)"); g.addColorStop(1,"rgba(255,255,255,0.4)");
+                        ctx.fillStyle=g; ctx.fill(); points3D=[];
+                    }
+                }
+            });
+            c.addEventListener('mousemove', e=>{if(isDrawing && currentTool==='pencil'){ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke();}});
+            c.addEventListener('mouseup', ()=>isDrawing=false);
         });
+        
+        // --- UTILITAIRES ---
+        function togglePlay(id){const v=document.getElementById('vid-'+id); if(v.paused)v.play(); else v.pause();}
+        function clickVideo(id){if(!currentTool)togglePlay(id);}
+        function clearDraw(id){const c=document.getElementById('canvas-'+id); c.getContext('2d').clearRect(0,0,c.width,c.height);}
+        function jumpTo(id,t){const v=document.getElementById('vid-'+id); v.currentTime=t; v.play();}
+        function tagAuto(id,l){fetch('/api/tag/',{method:'POST',body:JSON.stringify({mode:'auto',video_id:id,label:l,temps:document.getElementById('vid-'+id).currentTime})}).then(()=>location.reload());}
     </script>
 </body>
 </html>
-

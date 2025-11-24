@@ -2,18 +2,16 @@ from pathlib import Path
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = 'django-insecure-change-me'
+SECRET_KEY = 'django-insecure-change-me-prod'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
 
 INSTALLED_APPS = [
-    # --- CLOUDINARY (EN PREMIER) ---
     'cloudinary_storage',
     'django.contrib.staticfiles',
     'cloudinary',
-    # -------------------------------
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -72,16 +70,15 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# --- FICHIERS STATIQUES (DESIGN) ---
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# --- FICHIERS MEDIAS (VIDÉOS) SUR CLOUDINARY ---
 MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-# ⚠️ METS TES VRAIS CODES ICI ⚠️
+# ⚠️ METS TES VRAIS CODES CLOUDINARY ICI ⚠️
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dfn1gtzic', 
     'API_KEY': '569876383253485',

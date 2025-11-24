@@ -2,7 +2,10 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from analyses.views import liste_videos, ajouter_tag, telecharger_sequence, analyser_sequence_ia, analyser_video_entiere
+from analyses.views import (
+    liste_videos, ajouter_tag, telecharger_sequence, 
+    analyser_sequence_ia, analyser_video_entiere, lancer_spotlight
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -11,6 +14,7 @@ urlpatterns = [
     path('download/<int:seq_id>/', telecharger_sequence, name='dl_seq'),
     path('ai/sequence/<int:seq_id>/', analyser_sequence_ia, name='ai_seq'),
     path('ai/video/<int:video_id>/', analyser_video_entiere, name='ai_full_video'),
+    path('ai/spotlight/<int:video_id>/', lancer_spotlight, name='ai_spot'),
 ]
 
 if settings.DEBUG:

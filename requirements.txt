@@ -8,3 +8,5 @@ cloudinary
 python-docx
 requests
 google-generativeai
+ultralytics
+opencv-python-headless
