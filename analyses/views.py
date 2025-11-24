@@ -43,15 +43,22 @@ def analyser_sequence_ia(request, seq_id):
         return JsonResponse({'status': 'ok', 'rapport': rap, 'url_word': url})
     except Exception as e: return JsonResponse({'status': 'error', 'message': str(e)})
 
-# --- IA SPOTLIGHT (VIDEO) ---
+# --- FONCTION SPOTLIGHT (Visualisation Directe) ---
 def lancer_spotlight(request, video_id):
     try:
-        v = Video.objects.get(id=video_id)
-        nom = generer_tracking_spotlight(v.fichier_video.url, video_id)
-        if not nom: raise Exception("Echec tracking")
-        path = os.path.join(settings.MEDIA_ROOT, 'clips', nom)
-        return FileResponse(open(path, 'rb'), as_attachment=True)
-    except Exception as e: return HttpResponse(f"Erreur: {e}")
+        video = Video.objects.get(id=video_id)
+        
+        # On lance le traitement qui va uploader sur Cloudinary
+        url_resultat = generer_tracking_spotlight(video.fichier_video.url, video_id)
+        
+        if not url_resultat:
+            return JsonResponse({'status': 'error', 'message': "Échec du traitement vidéo"})
+            
+        # On renvoie l'URL pour lecture immédiate
+        return JsonResponse({'status': 'ok', 'video_url': url_resultat})
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
 
 # --- DOWNLOAD ---
 def telecharger_sequence(request, seq_id):
