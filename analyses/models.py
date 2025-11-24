@@ -9,7 +9,6 @@ class Video(models.Model):
         return self.titre
 
 class Sequence(models.Model):
-    # Regarde ici : il y a un espace (Tabulation) avant le mot "video"
     video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='sequences')
     label = models.CharField(max_length=100)
     temps_debut = models.FloatField()
@@ -17,3 +16,4 @@ class Sequence(models.Model):
     
     def __str__(self):
         return f"{self.label} ({self.temps_debut}s)"
+    

@@ -3,4 +3,6 @@ gunicorn
 moviepy
 imageio-ffmpeg
 whitenoise
+google-generativeai
+python-docx
 
